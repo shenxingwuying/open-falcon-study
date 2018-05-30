@@ -43,16 +43,30 @@ func Start() {
 	cfg := g.Config()
 	var err error
 	// check data dir
-	if err = file.EnsureDirRW(cfg.RRD.Storage); err != nil {
-		log.Fatalln("rrdtool.Start error, bad data dir "+cfg.RRD.Storage+",", err)
+	if (cfg.Storeage == "rrd") {
+		if err = file.EnsureDirRW(cfg.RRD.Storage); err != nil {
+			log.Fatalln("rrdtool.Start error, bad data dir "+cfg.RRD.Storage+",", err)
+		}
+		migrate_start(cfg)
+	} else {
+		// TODO
+		// Create a new HTTPClient
+		c, err := client.NewHTTPClient(client.HTTPConfig{
+			Addr:     "http://10.66.0.220:8086",
+			Username: cfg.username,
+			Password: cfg.password,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer c.Close()
+		log.Println("ping influxdb alive ok")
 	}
-
-	migrate_start(cfg)
 
 	// sync disk
 	go syncDisk()
 	go ioWorker()
-	log.Println("rrdtool.Start ok")
+	log.Println("sync_disk and io_worker Start ok")
 }
 
 // RRA.Point.Size

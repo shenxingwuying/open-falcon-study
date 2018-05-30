@@ -72,6 +72,7 @@ func writeFile(filename string, data []byte, perm os.FileMode) error {
 }
 
 func ioWorker() {
+	cfg := g.Config()
 	var err error
 	for {
 		select {
@@ -92,7 +93,11 @@ func ioWorker() {
 				}
 			} else if task.method == IO_TASK_M_FLUSH {
 				if args, ok := task.args.(*flushfile_t); ok {
-					task.done <- flushrrd(args.filename, args.items)
+					if (cfg.Storeage == "rrd") {
+						task.done <- flushrrd(args.filename, args.items)
+					} else {
+						task.done <- write_influxdb(args.filename, args.items)
+					}
 				}
 			} else if task.method == IO_TASK_M_FETCH {
 				if args, ok := task.args.(*fetch_t); ok {

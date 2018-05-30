@@ -8,6 +8,14 @@
 		"enabled": true,
 		"listen": "0.0.0.0:6070"
 	},
+	"storage": {
+		"engine": "rrd" // support rrd/influxdb
+	},
+	"influxdb": {
+		"address": "127.0.0.1:8086",
+		"username": "username",
+		"password": "password"
+	},
 	"rrd": {
 		"storage": "/home/work/data/6070"
 	},

@@ -24,6 +24,14 @@ type RpcConfig struct {
 	Listen  string `json:"listen"`
 }
 
+type StorageConfig struct {
+	Engine string `json:"engine"`
+}
+
+type InfluxdbConfig struct {
+	Address string `json:"address"`
+}
+
 type RRDConfig struct {
 	Storage string `json:"storage"`
 }
@@ -38,6 +46,8 @@ type GlobalConfig struct {
 	Debug       bool        `json:"debug"`
 	Http        *HttpConfig `json:"http"`
 	Rpc         *RpcConfig  `json:"rpc"`
+	Storeage	*StoreConfig `json:"engine"`
+	Influxdb 	*InfluxdbConfig `json:"address"`
 	RRD         *RRDConfig  `json:"rrd"`
 	DB          *DBConfig   `json:"db"`
 	CallTimeout int32       `json:"callTimeout"`

@@ -8,11 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/open-falcon/graph/api"
-	"github.com/open-falcon/graph/g"
-	"github.com/open-falcon/graph/http"
-	"github.com/open-falcon/graph/index"
-	"github.com/open-falcon/graph/rrdtool"
+	"github.com/shenxingwuying/open-falcon-study/graph/api"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/http"
+	"github.com/shenxingwuying/open-falcon-study/graph/index"
+	"github.com/shenxingwuying/open-falcon-study/graph/rrdtool"
 )
 
 func start_signal(pid int, cfg *g.GlobalConfig) {

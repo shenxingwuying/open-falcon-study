@@ -13,8 +13,8 @@ import (
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
-	"github.com/open-falcon/graph/g"
-	"github.com/open-falcon/graph/proc"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/proc"
 )
 
 const (

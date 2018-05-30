@@ -8,8 +8,8 @@ import (
 	_ "net/http/pprof"
 	"time"
 
-	"github.com/open-falcon/graph/g"
-	"github.com/open-falcon/graph/rrdtool"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/rrdtool"
 )
 
 type Dto struct {

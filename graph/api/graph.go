@@ -7,11 +7,11 @@ import (
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
-	"github.com/open-falcon/graph/g"
-	"github.com/open-falcon/graph/index"
-	"github.com/open-falcon/graph/proc"
-	"github.com/open-falcon/graph/rrdtool"
-	"github.com/open-falcon/graph/store"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/index"
+	"github.com/shenxingwuying/open-falcon-study/graph/proc"
+	"github.com/shenxingwuying/open-falcon-study/graph/rrdtool"
+	"github.com/shenxingwuying/open-falcon-study/graph/store"
 )
 
 type Graph int

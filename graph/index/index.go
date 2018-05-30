@@ -5,7 +5,7 @@ import (
 	"log"
 
 	cmodel "github.com/open-falcon/common/model"
-	"github.com/open-falcon/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
 )
 
 // 初始化索引功能模块

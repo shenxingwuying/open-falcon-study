@@ -9,7 +9,7 @@ import (
 
 	cmodel "github.com/open-falcon/common/model"
 
-	"github.com/open-falcon/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
 )
 
 var GraphItems *GraphItemMap

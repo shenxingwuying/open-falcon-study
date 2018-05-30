@@ -11,8 +11,8 @@ import (
 	"github.com/open-falcon/rrdlite"
 	"github.com/toolkits/file"
 
-	"github.com/open-falcon/graph/g"
-	"github.com/open-falcon/graph/store"
+	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/shenxingwuying/open-falcon-study/graph/store"
 )
 
 var (

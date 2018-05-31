@@ -30,6 +30,9 @@ type StorageConfig struct {
 
 type InfluxdbConfig struct {
 	Address string `json:"address"`
+	Database string `json:"database"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type RRDConfig struct {

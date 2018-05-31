@@ -93,10 +93,10 @@ func ioWorker() {
 				}
 			} else if task.method == IO_TASK_M_FLUSH {
 				if args, ok := task.args.(*flushfile_t); ok {
-					if (cfg.Storeage == "rrd") {
+					if (cfg.Storage == "rrd") {
 						task.done <- flushrrd(args.filename, args.items)
 					} else {
-						task.done <- write_influxdb(args.filename, args.items)
+						task.done <- g.WriteInfluxdb(args.filename, args.items)
 					}
 				}
 			} else if task.method == IO_TASK_M_FETCH {

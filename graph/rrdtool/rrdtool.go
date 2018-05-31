@@ -43,7 +43,7 @@ func Start() {
 	cfg := g.Config()
 	var err error
 	// check data dir
-	if (cfg.Storeage == "rrd") {
+	if (cfg.Storage == "rrd") {
 		if err = file.EnsureDirRW(cfg.RRD.Storage); err != nil {
 			log.Fatalln("rrdtool.Start error, bad data dir "+cfg.RRD.Storage+",", err)
 		}

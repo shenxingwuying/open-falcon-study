@@ -13,6 +13,7 @@
 	},
 	"influxdb": {
 		"address": "127.0.0.1:8086",
+		"database": "open-falcon",
 		"username": "username",
 		"password": "password"
 	},

@@ -4,18 +4,17 @@ import (
 	"log"
 	"time"
 	"sync"
+
+	cmodel "github.com/open-falcon/common/model"
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-var (
-	rwLock sync.RWMutex
-	client *client.Client
-)
+var influxdbClient *client.Client
 
 func initDB() (c *client.Client, err error) {
 	// Create a new HTTPClient
 	cfg := g.Config()
-	c, err := client.NewHTTPClient(client.HTTPConfig{
+	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     "http://10.66.0.220:8086",
 		Username: cfg.Username,
 		Password: cfg.Password,
@@ -23,8 +22,7 @@ func initDB() (c *client.Client, err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	client = c
-	return c, err
+	return influxdbClient , err
 }
 
 func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
@@ -37,10 +35,31 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 		log.Fatal("new batch point err", err)
 	}
 
-	
+	for _, item := range items {
+		tags := map[string]string {
+			"endpoint": item.Endpoint,
+			"counter": item.Metric,
+			"tags": item.Tags,
+			"type": item.DsType,
+			"step": item.Step,
+		}
+		fields := map[string] interface{} {
+			"value": item.Value,
+		}
+		pt, err := client.NewPoint("open_falcon_table", tags, fields, item.Timestamp)
+		if err != nil {
+			log.Fatal("new point error", err)
+		}
+		bp.AddPoint(pt)
+	}
+
+	if err := influxdbClient.Write(bp); err != nil {
+		log.Fatal(err)
+	}
+	return nil
 }
 
-func client() (client *client.Client) {
+func getInfluxdbClient() (client *client.Client) {
 	rwLock.Lock()
 	defer rwLock.Unlock()
 
@@ -51,4 +70,13 @@ func client() (client *client.Client) {
 		}
 	}
 	return client
+}
+
+func closeClient() {
+	rwLock.Lock()
+	defer rwLock.Unlock()
+
+	if client != nil {
+		client.Close()
+	}
 }

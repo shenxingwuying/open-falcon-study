@@ -37,6 +37,7 @@ func init() {
 }
 
 func syncDisk() {
+	cfg := g.Config()
 	time.Sleep(time.Second * 300)
 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP).C
 	var idx int = 0
@@ -48,6 +49,9 @@ func syncDisk() {
 			FlushRRD(idx, false)
 			idx += 1
 		case <-Out_done_chan:
+			if cfg.Storeage == "influxdb" {
+
+			}
 			log.Println("cron recv sigout and exit...")
 			return
 		}

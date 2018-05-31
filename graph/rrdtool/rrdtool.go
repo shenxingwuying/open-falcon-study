@@ -50,16 +50,6 @@ func Start() {
 		migrate_start(cfg)
 	} else {
 		// TODO
-		// Create a new HTTPClient
-		c, err := client.NewHTTPClient(client.HTTPConfig{
-			Addr:     "http://10.66.0.220:8086",
-			Username: cfg.username,
-			Password: cfg.password,
-		})
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer c.Close()
 		log.Println("ping influxdb alive ok")
 	}
 

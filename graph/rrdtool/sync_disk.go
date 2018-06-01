@@ -100,7 +100,7 @@ func ioWorker() {
 					if (cfg.Storage == "rrd") {
 						task.done <- flushrrd(args.filename, args.items)
 					} else {
-						task.done <- g.WriteInfluxdb(args.filename, args.items)
+						task.done <- WriteInfluxdb(args.filename, args.items)
 					}
 				}
 			} else if task.method == IO_TASK_M_FETCH {

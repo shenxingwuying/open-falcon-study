@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"time"
+    "log"
+    "strconv"
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
@@ -86,7 +88,7 @@ func handleItems(items []*cmodel.GraphItem) {
 	}
 }
 
-func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphAccurateQueryResponse) error {
+func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryResponse) error {
 	var (
 		datas      []*cmodel.RRDData
 		datas_size int
@@ -143,17 +145,18 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphAccurat
 			datas, _ = rrdtool.Fetch(filename, param.ConsolFun, start_ts, end_ts, step)
 			datas_size = len(datas)
 		} else if cfg.Storage.Engine == g.INFLUXDB {
-			var res []client.Result
 			// time, endpoint, counter(metric/tags), value
 			res, err := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
 			if err != nil {
 				log.Fatal("read influxdb error, ", err)
 			}
 			datas_size = len(res)
-			for i, item := range res {
+			for i, row := range res[0].Series[0].Values {
+                timestamp,_ := strconv.ParseInt(row[0].(string), 10, 64)
+                value,_ := strconv.ParseFloat(row[1].(string), 64)
 				d := &cmodel.RRDData{
-					Timestamp: item[0],
-					Value:     cmodel.JsonFloat(item[1]),
+                    Timestamp : timestamp,
+					Value:  cmodel.JsonFloat(value),
 				}
 				datas[i] = d
 			}

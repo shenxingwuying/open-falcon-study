@@ -4,6 +4,7 @@ import (
 	"log"
     "time"
     "bytes"
+    "strconv"
 
 	cmodel "github.com/open-falcon/common/model"
 
@@ -61,7 +62,7 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 }
 
 
-func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int) ([]*cmodel.RRDData, error) {
+func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int) ([]client.Result, error) {
 	cfg := g.Config()
 
 	// temp, because of type cast
@@ -80,12 +81,12 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 
 	var buffer bytes.Buffer
 	buffer.WriteString("select time, value from open_falcon_table where endpoint='"+endpoint)
-	buffer.WriteString("' and counter='"+counter)
-	buffer.WriteString(", and time >= "+start)
-	buffer.WriteString(" and time <=" + end)
+	buffer.WriteString("' and counter= '" + counter)
+	buffer.WriteString(", and time >= " + strconv.FormatInt(start, 10))
+	buffer.WriteString(" and time <= " + strconv.FormatInt(end, 10))
 
 	querySql := buffer.String()
-	q := influxdbClient.Query {
+	q := client.Query {
 		Command: querySql,
 		Database: cfg.Influxdb.Database,
 	}

@@ -79,10 +79,10 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	// @end
 
 	var buffer bytes.Buffer
-	buffer.WriteString("select value from open_falcon_table where endpoint='"+endpoint)
+	buffer.WriteString("select time, value from open_falcon_table where endpoint='"+endpoint)
 	buffer.WriteString("' and counter='"+counter)
-	buffer.WriteString(", and timestamp >= "+start)
-	buffer.WriteString(" and timestamp <=" + end)
+	buffer.WriteString(", and time >= "+start)
+	buffer.WriteString(" and time <=" + end)
 
 	querySql := buffer.String()
 	q := influxdbClient.Query {
@@ -100,7 +100,7 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 		return nil, nil
 	}
 
-	return nil
+	return res, nil
 }
 
 //func getInfluxdbClient() (client *client.Client) {

@@ -3,6 +3,7 @@ package rrdtool
 import (
 	"log"
     "time"
+    "bytes"
 
 	cmodel "github.com/open-falcon/common/model"
 
@@ -44,8 +45,6 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 		}
 		fields := map[string] interface{} {
 			"value": item.Value,
-			"type": item.DsType,
-			"step": item.Step,
 		}
 		pt, err := client.NewPoint("open_falcon_table", tags, fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
@@ -56,6 +55,49 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 
 	if err := influxdbClient.Write(bp); err != nil {
 		log.Fatal(err)
+	}
+
+	return nil
+}
+
+
+func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int) ([]*cmodel.RRDData, error) {
+	cfg := g.Config()
+
+	// temp, because of type cast
+	// Create a new HTTPClient
+	// @begin
+	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
+		Addr:     "http://10.66.0.220:8086",
+		Username: cfg.Influxdb.Username,
+		Password: cfg.Influxdb.Password,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer influxdbClient.Close()
+	// @end
+
+	var buffer bytes.Buffer
+	buffer.WriteString("select value from open_falcon_table where endpoint='"+endpoint)
+	buffer.WriteString("' and counter='"+counter)
+	buffer.WriteString(", and timestamp >= "+start)
+	buffer.WriteString(" and timestamp <=" + end)
+
+	querySql := buffer.String()
+	q := influxdbClient.Query {
+		Command: querySql,
+		Database: cfg.Influxdb.Database,
+	}
+
+	var res []client.Result
+	if response, err := influxdbClient.Query(q); err == nil {
+		if response.Error() != nil {
+
+		}
+		res = response.Results
+	} else {
+		return nil, nil
 	}
 
 	return nil

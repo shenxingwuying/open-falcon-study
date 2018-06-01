@@ -86,7 +86,7 @@ func handleItems(items []*cmodel.GraphItem) {
 	}
 }
 
-func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryResponse) error {
+func (this *Graph) QueryRRD(param cmodel.GraphQueryParam, resp *cmodel.GraphAccurateQueryResponse) error {
 	var (
 		datas      []*cmodel.RRDData
 		datas_size int
@@ -268,6 +268,216 @@ _RETURN_OK:
 	// statistics
 	proc.GraphQueryItemCnt.IncrBy(int64(len(resp.Values)))
 	return nil
+}
+
+func (this *Graph) QueryInfluxdb(param cmodel.GraphQueryParam, resp *cmodel.GraphAccurateQueryResponse) error {
+	var (
+		datas      []*cmodel.RRDData
+		datas_size int
+	)
+
+	// statistics
+	proc.GraphQueryCnt.Incr()
+
+	cfg := g.Config()
+
+	// form empty response
+	resp.Values = []*cmodel.RRDData{}
+	resp.Endpoint = param.Endpoint
+	resp.Counter = param.Counter
+	dsType, step, exists := index.GetTypeAndStep(param.Endpoint, param.Counter) // complete dsType and step
+	if !exists {
+		return nil
+	}
+	resp.DsType = dsType
+	resp.Step = step
+
+	start_ts := param.Start - param.Start%int64(step)
+	end_ts := param.End - param.End%int64(step) + int64(step)
+	if end_ts-start_ts-int64(step) < 1 {
+		return nil
+	}
+
+	md5 := cutils.Md5(param.Endpoint + "/" + param.Counter)
+	key := g.FormRrdCacheKey(md5, dsType, step)
+	filename := g.RrdFileName(cfg.RRD.Storage, md5, dsType, step)
+
+	// read cached items
+	items, flag := store.GraphItems.FetchAll(key)
+	items_size := len(items)
+
+	if cfg.Migrate.Enabled && flag&g.GRAPH_F_MISS != 0 {
+		// TODO , to support influxdb
+		node, _ := rrdtool.Consistent.Get(param.Endpoint + "/" + param.Counter)
+		done := make(chan error, 1)
+		res := &cmodel.GraphAccurateQueryResponse{}
+		rrdtool.Net_task_ch[node] <- &rrdtool.Net_task_t{
+			Method: rrdtool.NET_TASK_M_QUERY,
+			Done:   done,
+			Args:   param,
+			Reply:  res,
+		}
+		<-done
+		// fetch data from remote
+		datas = res.Values
+		datas_size = len(datas)
+	} else {
+		// read data from rrd file
+		if cfg.Storage.Engine == g.RRD {
+			datas, _ = rrdtool.Fetch(filename, param.ConsolFun, start_ts, end_ts, step)
+			datas_size = len(datas)
+		}
+		if cfg.Storage.Engine == g.INFLUXDB {
+			var res []client.Result
+			res := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
+			datas_size = len(res)
+			for i, item := range res {
+				d := &cmodel.RRDData{
+					Timestamp: item[3],
+					Value:     cmodel.JsonFloat(item[4]),
+				}
+				datas[i] = d
+			}
+		}
+	}
+
+	nowTs := time.Now().Unix()
+	lastUpTs := nowTs - nowTs%int64(step)
+	rra1StartTs := lastUpTs - int64(rrdtool.RRA1PointCnt*step)
+
+	// consolidated, do not merge
+	if start_ts < rra1StartTs {
+		resp.Values = datas
+		goto _RETURN_OK
+	}
+
+	// no cached items, do not merge
+	if items_size < 1 {
+		resp.Values = datas
+		goto _RETURN_OK
+	}
+
+	// merge
+	{
+		// fmt cached items
+		var val cmodel.JsonFloat
+		cache := make([]*cmodel.RRDData, 0)
+
+		ts := items[0].Timestamp
+		itemEndTs := items[items_size-1].Timestamp
+		itemIdx := 0
+		if dsType == g.DERIVE || dsType == g.COUNTER {
+			for ts < itemEndTs {
+				if itemIdx < items_size-1 && ts == items[itemIdx].Timestamp &&
+					ts == items[itemIdx+1].Timestamp-int64(step) {
+					val = cmodel.JsonFloat(items[itemIdx+1].Value-items[itemIdx].Value) / cmodel.JsonFloat(step)
+					if val < 0 {
+						val = cmodel.JsonFloat(math.NaN())
+					}
+					itemIdx++
+				} else {
+					// missing
+					val = cmodel.JsonFloat(math.NaN())
+				}
+
+				if ts >= start_ts && ts <= end_ts {
+					cache = append(cache, &cmodel.RRDData{Timestamp: ts, Value: val})
+				}
+				ts = ts + int64(step)
+			}
+		} else if dsType == g.GAUGE {
+			for ts <= itemEndTs {
+				if itemIdx < items_size && ts == items[itemIdx].Timestamp {
+					val = cmodel.JsonFloat(items[itemIdx].Value)
+					itemIdx++
+				} else {
+					// missing
+					val = cmodel.JsonFloat(math.NaN())
+				}
+
+				if ts >= start_ts && ts <= end_ts {
+					cache = append(cache, &cmodel.RRDData{Timestamp: ts, Value: val})
+				}
+				ts = ts + int64(step)
+			}
+		}
+		cache_size := len(cache)
+
+		// do merging
+		merged := make([]*cmodel.RRDData, 0)
+		if datas_size > 0 {
+			for _, val := range datas {
+				if val.Timestamp >= start_ts && val.Timestamp <= end_ts {
+					merged = append(merged, val) //rrdtool返回的数据,时间戳是连续的、不会有跳点的情况
+				}
+			}
+		}
+
+		if cache_size > 0 {
+			rrdDataSize := len(merged)
+			lastTs := cache[0].Timestamp
+
+			// find junction
+			rrdDataIdx := 0
+			for rrdDataIdx = rrdDataSize - 1; rrdDataIdx >= 0; rrdDataIdx-- {
+				if merged[rrdDataIdx].Timestamp < cache[0].Timestamp {
+					lastTs = merged[rrdDataIdx].Timestamp
+					break
+				}
+			}
+
+			// fix missing
+			for ts := lastTs + int64(step); ts < cache[0].Timestamp; ts += int64(step) {
+				merged = append(merged, &cmodel.RRDData{Timestamp: ts, Value: cmodel.JsonFloat(math.NaN())})
+			}
+
+			// merge cached items to result
+			rrdDataIdx += 1
+			for cacheIdx := 0; cacheIdx < cache_size; cacheIdx++ {
+				if rrdDataIdx < rrdDataSize {
+					if !math.IsNaN(float64(cache[cacheIdx].Value)) {
+						merged[rrdDataIdx] = cache[cacheIdx]
+					}
+				} else {
+					merged = append(merged, cache[cacheIdx])
+				}
+				rrdDataIdx++
+			}
+		}
+		mergedSize := len(merged)
+
+		// fmt result
+		ret_size := int((end_ts - start_ts) / int64(step))
+		ret := make([]*cmodel.RRDData, ret_size, ret_size)
+		mergedIdx := 0
+		ts = start_ts
+		for i := 0; i < ret_size; i++ {
+			if mergedIdx < mergedSize && ts == merged[mergedIdx].Timestamp {
+				ret[i] = merged[mergedIdx]
+				mergedIdx++
+			} else {
+				ret[i] = &cmodel.RRDData{Timestamp: ts, Value: cmodel.JsonFloat(math.NaN())}
+			}
+			ts += int64(step)
+		}
+		resp.Values = ret
+	}
+
+_RETURN_OK:
+// statistics
+	proc.GraphQueryItemCnt.IncrBy(int64(len(resp.Values)))
+	return nil
+}
+
+func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryResponse) error {
+	cfg := g.Config()
+
+	if (cfg.Storage.Engine == "rrd") {
+		return this.QueryRRD(param, resp)
+	}
+	if (cfg.Storage.Engine == "influxdb") {
+
+	}
 }
 
 func (this *Graph) Info(param cmodel.GraphInfoParam, resp *cmodel.GraphInfoResp) error {

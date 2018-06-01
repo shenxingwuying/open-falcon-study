@@ -9,6 +9,11 @@ import (
 	"github.com/toolkits/file"
 )
 
+const (
+	RRD = "rrd"
+	INFLUXDB = "influxdb"
+)
+
 type File struct {
 	Filename string
 	Body     []byte

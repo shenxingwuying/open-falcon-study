@@ -2,17 +2,11 @@ package rrdtool
 
 import (
 	"log"
-	"math"
-	"time"
-	"sync"
+    "time"
 
 	cmodel "github.com/open-falcon/common/model"
-	"github.com/open-falcon/rrdlite"
-	"github.com/toolkits/file"
 
 	"github.com/shenxingwuying/open-falcon-study/graph/g"
-	"github.com/shenxingwuying/open-falcon-study/graph/store"
-
 	"github.com/influxdata/influxdb/client/v2"
 )
 
@@ -22,11 +16,10 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	// temp, because of type cast
 	// Create a new HTTPClient
 	// @begin
-	cfg := g.Config()
 	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
 		Addr:     "http://10.66.0.220:8086",
-		Username: cfg.Username,
-		Password: cfg.Password,
+		Username: cfg.Influxdb.Username,
+		Password: cfg.Influxdb.Password,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +28,7 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	// @end
 
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
-		Database:  cfg.Database,
+		Database:  cfg.Influxdb.Database,
 		Precision: "s",
 	})
 	if err != nil {
@@ -43,24 +36,25 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	}
 
 	for _, item := range items {
+        // counter := item.Metric+"/"+sort(item.Tags)
+        counter := item.Metric+"/"
 		tags := map[string]string {
 			"endpoint": item.Endpoint,
-			"counter": item.Metric,
-			"tags": item.Tags,
-			"type": item.DsType,
-			"step": item.Step,
+			"counter": counter,
 		}
 		fields := map[string] interface{} {
 			"value": item.Value,
+			"type": item.DsType,
+			"step": item.Step,
 		}
-		pt, err := client.NewPoint("open_falcon_table", tags, fields, item.Timestamp)
+		pt, err := client.NewPoint("open_falcon_table", tags, fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
 			log.Fatal("new point error", err)
 		}
 		bp.AddPoint(pt)
 	}
 
-	if err := influxdbClient(client.client).Write(bp); err != nil {
+	if err := influxdbClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
 

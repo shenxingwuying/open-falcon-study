@@ -49,7 +49,7 @@ func syncDisk() {
 			FlushRRD(idx, false)
 			idx += 1
 		case <-Out_done_chan:
-			if cfg.Storeage == "influxdb" {
+			if cfg.Storage.Engine == "influxdb" {
 
 			}
 			log.Println("cron recv sigout and exit...")
@@ -97,7 +97,7 @@ func ioWorker() {
 				}
 			} else if task.method == IO_TASK_M_FLUSH {
 				if args, ok := task.args.(*flushfile_t); ok {
-					if (cfg.Storage == "rrd") {
+					if (cfg.Storage.Engine == "rrd") {
 						task.done <- flushrrd(args.filename, args.items)
 					} else {
 						task.done <- WriteInfluxdb(args.filename, args.items)

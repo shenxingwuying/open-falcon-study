@@ -6,6 +6,7 @@ import (
 	"time"
     "log"
     "strconv"
+    "encoding/json"
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
@@ -150,20 +151,25 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			res, err := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
 			if err != nil {
 				log.Fatal("read influxdb error, ", err)
-			}
+			} else {
+                log.Println(res)
+            }
 			if len(res) < 1 || len(res[0].Series) < 1 {
 				log.Fatal("no result")
 			} else {
 				datas_size = len(res[0].Series[0].Values)
+                tmp_datas := make([]*cmodel.RRDData, datas_size)
 				for i, row := range res[0].Series[0].Values {
 					timestamp, _ := strconv.ParseInt(row[0].(string), 10, 64)
-					value, _ := strconv.ParseFloat(row[1].(string), 64)
+//					value, _ := strconv.ParseFloat(row[1].(string), 64)
+                    value, _ := row[1].(json.Number).Float64()
 					d := &cmodel.RRDData{
 						Timestamp: timestamp,
 						Value:     cmodel.JsonFloat(value),
 					}
-					datas[i] = d
+					tmp_datas[i] = d
 				}
+                datas = tmp_datas
 			}
 		} else {
 			log.Fatal("not support engine", cfg.Storage.Engine)

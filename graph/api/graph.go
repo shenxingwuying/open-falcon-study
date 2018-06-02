@@ -153,7 +153,6 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			}
             if len(res) < 1 || len(res[0].Series) < 1 {
 				log.Fatal("no result")
-                return nil
             }
 			datas_size = len(res[0].Series[0].Values)
 			for i, row := range res[0].Series[0].Values {

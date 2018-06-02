@@ -150,12 +150,12 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			// time, endpoint, counter(metric/tags), value
 			res, err := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
 			if err != nil {
-				log.Fatal("read influxdb error, ", err)
+				log.Println("read influxdb error, ", err)
 			} else {
                 log.Println(res)
             }
 			if len(res) < 1 || len(res[0].Series) < 1 {
-				log.Fatal("no result")
+				log.Println("no result from influxdb")
 			} else {
 				datas_size = len(res[0].Series[0].Values)
                 tmp_datas := make([]*cmodel.RRDData, datas_size)
@@ -172,7 +172,7 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
                 datas = tmp_datas
 			}
 		} else {
-			log.Fatal("not support engine", cfg.Storage.Engine)
+			log.Println("not support engine", cfg.Storage.Engine)
 		}
 	}
 

@@ -38,7 +38,7 @@ func init() {
 
 func syncDisk() {
 	cfg := g.Config()
-	time.Sleep(time.Second * 300)
+	time.Sleep(time.Second * 60)
 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP).C
 	var idx int = 0
 

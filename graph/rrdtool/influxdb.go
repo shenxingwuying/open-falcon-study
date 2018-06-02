@@ -87,8 +87,8 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	var buffer bytes.Buffer
 	buffer.WriteString("select time, value from open_falcon_table where endpoint='"+endpoint)
 	buffer.WriteString("' and counter= '" + counter)
-	buffer.WriteString(", and time >= " + strconv.FormatInt(start, 10))
-	buffer.WriteString(" and time <= " + strconv.FormatInt(end, 10))
+	buffer.WriteString(", and time >= " + strconv.FormatInt(1000000000 * start, 10))
+	buffer.WriteString(" and time <= " + strconv.FormatInt(1000000000 * end, 10))
 
 	querySql := buffer.String()
 	q := client.Query {

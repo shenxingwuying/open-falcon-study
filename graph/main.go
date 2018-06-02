@@ -18,7 +18,8 @@ import (
 func start_signal(pid int, cfg *g.GlobalConfig) {
 	sigs := make(chan os.Signal, 1)
 	log.Println(pid, "register signal notify")
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGABRT, syscall.SIGSEGV)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT,
+		syscall.SIGABRT, syscall.SIGSEGV, syscall.SIGFPE, syscall.SIGILL)
 
 	for {
 		s := <-sigs
@@ -46,6 +47,9 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 			log.Println(pid, "exit")
 			os.Exit(0)
 		case syscall.SIGABRT, syscall.SIGSEGV:
+			log.Println(pid, "abort, signal, exit", s.String())
+			os.Exit(0)
+		default:
 			log.Println(pid, "abort, signal, exit", s.String())
 			os.Exit(0)
 		}

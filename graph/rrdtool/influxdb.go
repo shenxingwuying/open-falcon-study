@@ -1,6 +1,7 @@
 package rrdtool
 
 import (
+    "fmt"
 	"log"
     "time"
     "bytes"

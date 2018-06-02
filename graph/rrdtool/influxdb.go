@@ -9,7 +9,7 @@ import (
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
-	"github.com/shenxingwuying/open-falcon-study/graph/g"
+	"github.com/open-falcon/graph/g"
 	"github.com/influxdata/influxdb/client/v2"
 )
 
@@ -59,9 +59,8 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	}
 
 	if err := influxdbClient.Write(bp); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-    log.Println("write some points")
 
 	return nil
 }
@@ -79,7 +78,7 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 		Password: cfg.Influxdb.Password,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer influxdbClient.Close()
 	// @end
@@ -87,8 +86,8 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	var buffer bytes.Buffer
 	buffer.WriteString("select time, value from open_falcon_table where endpoint='"+endpoint)
 	buffer.WriteString("' and counter= '" + counter)
-	buffer.WriteString(", and time >= " + strconv.FormatInt(start, 10))
-	buffer.WriteString(" and time <= " + strconv.FormatInt(end, 10))
+	buffer.WriteString("' and time >= " + strconv.FormatInt(1000000000 * start, 10))
+	buffer.WriteString(" and time <= " + strconv.FormatInt(1000000000 * end, 10))
 
 	querySql := buffer.String()
 	q := client.Query {

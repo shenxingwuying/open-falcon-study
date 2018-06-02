@@ -8,17 +8,18 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/shenxingwuying/open-falcon-study/graph/api"
-	"github.com/shenxingwuying/open-falcon-study/graph/g"
-	"github.com/shenxingwuying/open-falcon-study/graph/http"
-	"github.com/shenxingwuying/open-falcon-study/graph/index"
-	"github.com/shenxingwuying/open-falcon-study/graph/rrdtool"
+	"github.com/open-falcon/graph/api"
+	"github.com/open-falcon/graph/g"
+	"github.com/open-falcon/graph/http"
+	"github.com/open-falcon/graph/index"
+	"github.com/open-falcon/graph/rrdtool"
 )
 
 func start_signal(pid int, cfg *g.GlobalConfig) {
 	sigs := make(chan os.Signal, 1)
 	log.Println(pid, "register signal notify")
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT,
+		syscall.SIGABRT, syscall.SIGSEGV, syscall.SIGFPE, syscall.SIGILL)
 
 	for {
 		s := <-sigs
@@ -44,6 +45,12 @@ func start_signal(pid int, cfg *g.GlobalConfig) {
 			log.Println("rrdtool stop ok")
 
 			log.Println(pid, "exit")
+			os.Exit(0)
+		case syscall.SIGABRT, syscall.SIGSEGV:
+			log.Println(pid, "abort, signal, exit", s.String())
+			os.Exit(0)
+		default:
+			log.Println(pid, "abort, signal, exit", s.String())
 			os.Exit(0)
 		}
 	}

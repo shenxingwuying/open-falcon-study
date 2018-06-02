@@ -63,6 +63,7 @@ func QueryOne(para cmodel.GraphQueryParam) (resp *cmodel.GraphQueryResponse, err
 	go func() {
 		resp := &cmodel.GraphQueryResponse{}
 		err := rpcConn.Call("Graph.Query", para, resp)
+		log.Println("query", err)
 		ch <- &ChResult{Err: err, Resp: resp}
 	}()
 

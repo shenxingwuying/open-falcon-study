@@ -5,15 +5,16 @@ import (
 	"math"
 	"time"
     "log"
-    "strconv"
+//    "strconv"
+    "encoding/json"
 
 	cmodel "github.com/open-falcon/common/model"
 	cutils "github.com/open-falcon/common/utils"
-	"github.com/shenxingwuying/open-falcon-study/graph/g"
-	"github.com/shenxingwuying/open-falcon-study/graph/index"
-	"github.com/shenxingwuying/open-falcon-study/graph/proc"
-	"github.com/shenxingwuying/open-falcon-study/graph/rrdtool"
-	"github.com/shenxingwuying/open-falcon-study/graph/store"
+	"github.com/open-falcon/graph/g"
+	"github.com/open-falcon/graph/index"
+	"github.com/open-falcon/graph/proc"
+	"github.com/open-falcon/graph/rrdtool"
+	"github.com/open-falcon/graph/store"
 )
 
 type Graph int
@@ -148,20 +149,26 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			// time, endpoint, counter(metric/tags), value
 			res, err := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
 			if err != nil {
-				log.Fatal("read influxdb error, ", err)
+				log.Println("read influxdb error, ", err)
 			}
-			datas_size = len(res)
-			for i, row := range res[0].Series[0].Values {
-                timestamp,_ := strconv.ParseInt(row[0].(string), 10, 64)
-                value,_ := strconv.ParseFloat(row[1].(string), 64)
-				d := &cmodel.RRDData{
-                    Timestamp : timestamp,
-					Value:  cmodel.JsonFloat(value),
+			if len(res) < 1 || len(res[0].Series) < 1 {
+				log.Println("no result from influxdb")
+			} else {
+				datas_size = len(res[0].Series[0].Values)
+                tmp_datas := make([]*cmodel.RRDData, datas_size)
+				for i, row := range res[0].Series[0].Values {
+					timestamp, _ := time.Parse(time.RFC3339, row[0].(string))
+                    value, _ := row[1].(json.Number).Float64()
+					d := &cmodel.RRDData{
+						Timestamp: timestamp.Unix(),
+						Value:     cmodel.JsonFloat(value),
+					}
+					tmp_datas[i] = d
 				}
-				datas[i] = d
+                datas = tmp_datas
 			}
 		} else {
-			log.Fatal("not support engine", cfg.Storage.Engine)
+			log.Println("not support engine", cfg.Storage.Engine)
 		}
 	}
 

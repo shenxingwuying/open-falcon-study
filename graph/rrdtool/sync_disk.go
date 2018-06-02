@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/shenxingwuying/open-falcon-study/graph/g"
-	"github.com/shenxingwuying/open-falcon-study/graph/store"
+	"github.com/open-falcon/graph/g"
+	"github.com/open-falcon/graph/store"
 	"github.com/toolkits/file"
 )
 
@@ -38,7 +38,7 @@ func init() {
 
 func syncDisk() {
 	cfg := g.Config()
-	time.Sleep(time.Second * 300)
+	time.Sleep(time.Second * 60)
 	ticker := time.NewTicker(time.Millisecond * g.FLUSH_DISK_STEP).C
 	var idx int = 0
 

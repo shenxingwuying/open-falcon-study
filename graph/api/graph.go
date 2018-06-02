@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
     "log"
-    "strconv"
+//    "strconv"
     "encoding/json"
 
 	cmodel "github.com/open-falcon/common/model"
@@ -125,7 +125,6 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 	items, flag := store.GraphItems.FetchAll(key)
 	items_size := len(items)
 
-    log.Println("start:", start_ts,", end:", end_ts)
 	if cfg.Migrate.Enabled && flag&g.GRAPH_F_MISS != 0 {
 		// TODO , to support influxdb. BY shenxingwuying
 		node, _ := rrdtool.Consistent.Get(param.Endpoint + "/" + param.Counter)
@@ -151,20 +150,17 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			res, err := rrdtool.ReadInfluxdb(param.Endpoint, param.Counter, param.ConsolFun, start_ts, end_ts, step)
 			if err != nil {
 				log.Println("read influxdb error, ", err)
-			} else {
-                log.Println(res)
-            }
+			}
 			if len(res) < 1 || len(res[0].Series) < 1 {
 				log.Println("no result from influxdb")
 			} else {
 				datas_size = len(res[0].Series[0].Values)
                 tmp_datas := make([]*cmodel.RRDData, datas_size)
 				for i, row := range res[0].Series[0].Values {
-					timestamp, _ := strconv.ParseInt(row[0].(string), 10, 64)
-//					value, _ := strconv.ParseFloat(row[1].(string), 64)
+					timestamp, _ := time.Parse(time.RFC3339, row[0].(string))
                     value, _ := row[1].(json.Number).Float64()
 					d := &cmodel.RRDData{
-						Timestamp: timestamp,
+						Timestamp: timestamp.Unix(),
 						Value:     cmodel.JsonFloat(value),
 					}
 					tmp_datas[i] = d

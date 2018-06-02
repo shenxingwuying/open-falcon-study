@@ -59,9 +59,8 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	}
 
 	if err := influxdbClient.Write(bp); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-    log.Println("write some points")
 
 	return nil
 }
@@ -79,7 +78,7 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 		Password: cfg.Influxdb.Password,
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	defer influxdbClient.Close()
 	// @end
@@ -91,7 +90,6 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	buffer.WriteString(" and time <= " + strconv.FormatInt(1000000000 * end, 10))
 
 	querySql := buffer.String()
-    log.Println(querySql)
 	q := client.Query {
 		Command: querySql,
 		Database: cfg.Influxdb.Database,

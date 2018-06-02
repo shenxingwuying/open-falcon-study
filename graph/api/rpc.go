@@ -77,6 +77,7 @@ func Start() {
 				e := connects.insert(conn)
 				defer connects.remove(e)
 				rpc.ServeConn(conn)
+				log.Print("finsh a conn")
 			}()
 		}
 	}()

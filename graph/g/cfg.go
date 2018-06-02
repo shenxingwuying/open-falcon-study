@@ -54,8 +54,8 @@ type GlobalConfig struct {
 	Debug       bool        `json:"debug"`
 	Http        *HttpConfig `json:"http"`
 	Rpc         *RpcConfig  `json:"rpc"`
-	Storage     *StorageConfig `json:"engine"`
-	Influxdb    *InfluxdbConfig `json:"address"`
+	Storage     *StorageConfig `json:"storage"`
+	Influxdb    *InfluxdbConfig `json:"influxdb"`
 	RRD         *RRDConfig  `json:"rrd"`
 	DB          *DBConfig   `json:"db"`
 	CallTimeout int32       `json:"callTimeout"`

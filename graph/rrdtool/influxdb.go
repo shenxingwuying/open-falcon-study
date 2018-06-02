@@ -57,6 +57,7 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	if err := influxdbClient.Write(bp); err != nil {
 		log.Fatal(err)
 	}
+    log.Println("write some points")
 
 	return nil
 }

@@ -66,6 +66,7 @@ func main() {
 
 	// global config
 	g.ParseConfig(*cfg)
+    log.Println("storage system:" + g.Config().Storage.Engine)
 	// init db
 	g.InitDB()
 	// rrdtool before api for disable loopback connection

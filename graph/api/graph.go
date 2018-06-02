@@ -151,18 +151,19 @@ func (this *Graph) Query(param cmodel.GraphQueryParam, resp *cmodel.GraphQueryRe
 			if err != nil {
 				log.Fatal("read influxdb error, ", err)
 			}
-            if len(res) < 1 || len(res[0].Series) < 1 {
+			if len(res) < 1 || len(res[0].Series) < 1 {
 				log.Fatal("no result")
-            }
-			datas_size = len(res[0].Series[0].Values)
-			for i, row := range res[0].Series[0].Values {
-                timestamp,_ := strconv.ParseInt(row[0].(string), 10, 64)
-                value,_ := strconv.ParseFloat(row[1].(string), 64)
-				d := &cmodel.RRDData{
-                    Timestamp : timestamp,
-					Value:  cmodel.JsonFloat(value),
+			} else {
+				datas_size = len(res[0].Series[0].Values)
+				for i, row := range res[0].Series[0].Values {
+					timestamp, _ := strconv.ParseInt(row[0].(string), 10, 64)
+					value, _ := strconv.ParseFloat(row[1].(string), 64)
+					d := &cmodel.RRDData{
+						Timestamp: timestamp,
+						Value:     cmodel.JsonFloat(value),
+					}
+					datas[i] = d
 				}
-				datas[i] = d
 			}
 		} else {
 			log.Fatal("not support engine", cfg.Storage.Engine)

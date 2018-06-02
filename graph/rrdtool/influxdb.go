@@ -7,7 +7,7 @@ import (
     "strconv"
 
 	cmodel "github.com/open-falcon/common/model"
-
+	cutils "github.com/open-falcon/common/utils"
 	"github.com/shenxingwuying/open-falcon-study/graph/g"
 	"github.com/influxdata/influxdb/client/v2"
 )
@@ -39,7 +39,10 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 
 	for _, item := range items {
         // counter := item.Metric+"/"+sort(item.Tags)
-        counter := item.Metric+"/"
+		counter := item.Metric
+		if len(item.Tags) > 0 {
+			counter = fmt.Sprintf("%s/%s", counter, cutils.SortedTags(item.Tags))
+		}
 		tags := map[string]string {
 			"endpoint": item.Endpoint,
 			"counter": counter,

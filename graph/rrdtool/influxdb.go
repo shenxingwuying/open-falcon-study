@@ -13,22 +13,23 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-var influxdbClient *client.Client
+var influxdbClient client.Client
 
-func init() {
+func InitInfluxdbClient() {
 	cfg := g.Config()
 
 	// temp, because of type cast
 	// Create a new HTTPClient
 	// @begin
-	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     cfg.Influxdb.Address,
+    influxdb, err := client.NewHTTPClient(client.HTTPConfig{
+		Address:  cfg.Influxdb.Address,
 		Username: cfg.Influxdb.Username,
 		Password: cfg.Influxdb.Password,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+    influxdbClient = influxdb
 }
 
 func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {

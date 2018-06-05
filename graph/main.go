@@ -76,6 +76,7 @@ func main() {
     log.Println("storage system:" + g.Config().Storage.Engine)
 	// init db
 	g.InitDB()
+    rrdtool.InitInfluxdbClient()
 	// rrdtool before api for disable loopback connection
 	rrdtool.Start()
 	// start api

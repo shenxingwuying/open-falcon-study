@@ -45,6 +45,7 @@ func getHosts(w http.ResponseWriter, req *http.Request, hostKeyword string) {
 	if len(hostKeyword) == 1 {
 		hostKeyword = ".+"
 	}
+    log.Println("hostKeyword:", hostKeyword)
 	rand.Seed(time.Now().UTC().UnixNano())
 	random64 := rand.Float64()
 	_r := strconv.FormatFloat(random64, 'f', -1, 32)
@@ -55,7 +56,7 @@ func getHosts(w http.ResponseWriter, req *http.Request, hostKeyword string) {
 	} else {
 		url = g.Config().Api.Query + url
 	}
-
+    log.Println("url:", url)
 	reqGet, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		StdRender(w, "", err)
@@ -76,6 +77,8 @@ func getHosts(w http.ResponseWriter, req *http.Request, hostKeyword string) {
 		if err := json.Unmarshal(body, &nodes); err != nil {
 			StdRender(w, "", err)
 		}
+        log.Println("body:", body)
+        log.Println("nodes:", nodes)
 		for _, host := range nodes["data"].([]interface{}) {
 			item := map[string]interface{}{
 				"text":       host,
@@ -179,6 +182,8 @@ func setQueryEditor(w http.ResponseWriter, req *http.Request) {
 	query = strings.Replace(query, ".%", "", -1)
 	query = strings.Replace(query, ".undefined", "", -1)
 	query = strings.Replace(query, ".select metric", "", -1)
+    log.Println("request:", req)
+    log.Println("query:", query)
 	if !strings.Contains(query, "#") {
 		getHosts(w, req, query)
 	} else {
@@ -248,7 +253,6 @@ func getMetricValues(req *http.Request, host string, targets []string, result []
 			if err := json.Unmarshal(body, &nodes); err != nil {
 				log.Println(err.Error())
 			}
-
 			for _, node := range nodes {
 				if _, ok := node.(map[string]interface{})["Values"]; ok {
 					result = append(result, node)

@@ -12,7 +12,7 @@
 		"engine": "rrd" // support rrd/influxdb
 	},
 	"influxdb": {
-		"address": "127.0.0.1:8086",
+		"address": "http://127.0.0.1:8086",
 		"database": "open-falcon",
 		"username": "username",
 		"password": "password",

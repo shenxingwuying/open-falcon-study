@@ -38,6 +38,7 @@ type InfluxdbConfig struct {
 	Database string `json:"database"`
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Tablename string `json:"tablename"`
 }
 
 type RRDConfig struct {

@@ -13,22 +13,26 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
+var influxdbClient *client.Client
+
+func init() {
 	cfg := g.Config()
 
 	// temp, because of type cast
 	// Create a new HTTPClient
 	// @begin
 	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.66.0.220:8086",
+		Addr:     cfg.Influxdb.Address,
 		Username: cfg.Influxdb.Username,
 		Password: cfg.Influxdb.Password,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer influxdbClient.Close()
-	// @end
+}
+
+func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
+	cfg := g.Config()
 
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
 		Database:  cfg.Influxdb.Database,
@@ -51,7 +55,7 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 		fields := map[string] interface{} {
 			"value": item.Value,
 		}
-		pt, err := client.NewPoint("open_falcon_table", tags, fields, time.Unix(item.Timestamp, 0))
+		pt, err := client.NewPoint(cfg.Influxdb.Tablename, tags, fields, time.Unix(item.Timestamp, 0))
 		if err != nil {
 			log.Fatal("new point error", err)
 		}
@@ -69,20 +73,6 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int) ([]client.Result, error) {
 	cfg := g.Config()
 
-	// temp, because of type cast
-	// Create a new HTTPClient
-	// @begin
-	influxdbClient , err := client.NewHTTPClient(client.HTTPConfig{
-		Addr:     "http://10.66.0.220:8086",
-		Username: cfg.Influxdb.Username,
-		Password: cfg.Influxdb.Password,
-	})
-	if err != nil {
-		log.Println(err)
-	}
-	defer influxdbClient.Close()
-	// @end
-
 	var buffer bytes.Buffer
 	buffer.WriteString("select time, value from open_falcon_table where endpoint='"+endpoint)
 	buffer.WriteString("' and counter= '" + counter)
@@ -98,7 +88,7 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	var res []client.Result
 	if response, err := influxdbClient.Query(q); err == nil {
 		if response.Error() != nil {
-
+			log.Println(response.Error())
 		}
 		res = response.Results
 	} else {

@@ -15,7 +15,8 @@
 		"address": "127.0.0.1:8086",
 		"database": "open-falcon",
 		"username": "username",
-		"password": "password"
+		"password": "password",
+		"tablename": "tablename"
 	},
 	"rrd": {
 		"storage": "/home/work/data/6070"

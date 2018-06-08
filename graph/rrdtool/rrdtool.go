@@ -39,6 +39,14 @@ type readfile_t struct {
 	data     []byte
 }
 
+var (
+	slaveFlush chan int
+)
+
+func init() {
+	slaveFlush = make(chan int, 1)
+}
+
 func Start() {
 	cfg := g.Config()
 	var err error
@@ -55,6 +63,9 @@ func Start() {
 
 	// sync disk
 	go syncDisk()
+	if (cfg.Storage.Engine == g.INFLUXDB) {
+		go syncSlaveInfluxdb()
+	}
 	go ioWorker()
 	log.Println("sync_disk and io_worker Start ok")
 }
@@ -300,4 +311,9 @@ func FlushRRD(idx int, force bool) {
 			CommitByKey(key)
 		}
 	}
+}
+
+func syncSlaveInfluxdb() {
+	time.Sleep(time.Second * 60)
+	log.Println("will flush to slave influxdb, TEMP, will patch it")
 }

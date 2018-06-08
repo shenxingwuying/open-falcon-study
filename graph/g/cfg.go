@@ -33,8 +33,12 @@ type StorageConfig struct {
 	Engine string `json:"engine"`
 }
 
+type InfluxAddressHA struct {
+	Master string `json:"master"`
+	Slave string `json:"slave"`
+}
 type InfluxdbConfig struct {
-	Address string `json:"address"`
+	Address InfluxAddressHA `json:"address"`
 	Database string `json:"database"`
 	Username string `json:"username"`
 	Password string `json:"password"`

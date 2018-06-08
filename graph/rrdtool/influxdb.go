@@ -13,7 +13,8 @@ import (
 	"github.com/influxdata/influxdb/client/v2"
 )
 
-var influxdbClient client.Client
+var influxdbMasterClient client.Client
+var influxdbSlaveClient client.Client
 
 func InitInfluxdbClient() {
 	cfg := g.Config()
@@ -21,18 +22,24 @@ func InitInfluxdbClient() {
 	// temp, because of type cast
 	// Create a new HTTPClient
 	// @begin
-    influxdb, err := client.NewHTTPClient(client.HTTPConfig{
-		Address:  cfg.Influxdb.Address,
+    influxdbMasterClient, err1 := client.NewHTTPClient(client.HTTPConfig{
+		Address:  cfg.Influxdb.Address.Master,
 		Username: cfg.Influxdb.Username,
 		Password: cfg.Influxdb.Password,
 	})
-	if err != nil {
-		log.Fatal(err)
+
+	influxdbSlaveClient, err2 := client.NewHTTPClient(client.HTTPConfig{
+		Address:  cfg.Influxdb.Address.Slave,
+		Username: cfg.Influxdb.Username,
+		Password: cfg.Influxdb.Password,
+	})
+
+	if err1 != nil && err2 != nil {
+		log.Fatal(err1)
 	}
-    influxdbClient = influxdb
 }
 
-func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
+func WriteInfluxdb(filename string, items []*cmodel.GraphItem, isMaster bool) error {
 	cfg := g.Config()
 
 	bp, err := client.NewBatchPoints(client.BatchPointsConfig{
@@ -44,16 +51,16 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 	}
 
 	for _, item := range items {
-        // counter := item.Metric+"/"+sort(item.Tags)
+		// counter := item.Metric+"/"+sort(item.Tags)
 		counter := item.Metric
 		if len(item.Tags) > 0 {
 			counter = fmt.Sprintf("%s/%s", counter, cutils.SortedTags(item.Tags))
 		}
-		tags := map[string]string {
+		tags := map[string]string{
 			"endpoint": item.Endpoint,
-			"counter": counter,
+			"counter":  counter,
 		}
-		fields := map[string] interface{} {
+		fields := map[string]interface{}{
 			"value": item.Value,
 		}
 		pt, err := client.NewPoint(cfg.Influxdb.Tablename, tags, fields, time.Unix(item.Timestamp, 0))
@@ -63,15 +70,22 @@ func WriteInfluxdb(filename string, items []*cmodel.GraphItem) error {
 		bp.AddPoint(pt)
 	}
 
-	if err := influxdbClient.Write(bp); err != nil {
-		log.Println(err)
+	if isMaster {
+		if err := influxdbMasterClient.Write(bp); err != nil {
+			log.Println(err)
+		}
+	} else {
+		if err := influxdbSlaveClient.Write(bp); err != nil {
+			log.Println(err)
+		}
 	}
+
 
 	return nil
 }
 
 
-func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int) ([]client.Result, error) {
+func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end int64, step int, isMaster bool) ([]client.Result, error) {
 	cfg := g.Config()
 
 	var buffer bytes.Buffer
@@ -87,36 +101,25 @@ func ReadInfluxdb(endpoint string, counter string, cf string, start int64, end i
 	}
 
 	var res []client.Result
-	if response, err := influxdbClient.Query(q); err == nil {
-		if response.Error() != nil {
-			log.Println(response.Error())
+	if isMaster {
+		if response, err := influxdbMasterClient.Query(q); err == nil {
+			if response.Error() != nil {
+				log.Println(response.Error())
+			}
+			res = response.Results
+		} else {
+			return nil, nil
 		}
-		res = response.Results
 	} else {
-		return nil, nil
+		if response, err := influxdbSlaveClient.Query(q); err == nil {
+			if response.Error() != nil {
+				log.Println(response.Error())
+			}
+			res = response.Results
+		} else {
+			return nil, nil
+		}
 	}
 
 	return res, nil
 }
-
-//func getInfluxdbClient() (client *client.Client) {
-//	rwLock.Lock()
-//	defer rwLock.Unlock()
-//
-//	if (client == nil) {
-//		client, err := initDB()
-//		if (err != nil) {
-//			log.Fatal("get influxdb client error")
-//		}
-//	}
-//	return client
-//}
-//
-//func closeClient() {
-//	rwLock.Lock()
-//	defer rwLock.Unlock()
-//
-//	if influxdbClient != nil {
-//		client.Close()
-//	}
-//}

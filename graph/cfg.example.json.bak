@@ -12,9 +12,9 @@
 		"engine": "rrd" // support rrd/influxdb
 	},
 	"influxdb": {
-		"address": {
-			"master": "127.0.0.1:8086",
-			"slave": "10.66.0.159:8086"
+		"address" : {
+			"0": "127.0.0.1:8086",
+			"1": "10.66.0.159:8086"
 		},
 		"database": "open-falcon",
 		"username": "username",

@@ -47,11 +47,10 @@ func syncDisk() {
 		case <-ticker:
 			idx = idx % store.GraphItems.Size
 			FlushRRD(idx, false)
+			// include influxdb, do nothing will ok
 			idx += 1
 		case <-Out_done_chan:
-			if cfg.Storage.Engine == "influxdb" {
-
-			}
+			// influxdb no do nothing
 			log.Println("cron recv sigout and exit...")
 			return
 		}
@@ -100,7 +99,10 @@ func ioWorker() {
 					if (cfg.Storage.Engine == "rrd") {
 						task.done <- flushrrd(args.filename, args.items)
 					} else {
-						task.done <- WriteInfluxdb(args.filename, args.items)
+						task.done <- WriteInfluxdb(args.filename, args.items, true)
+						go func() { // not good, will change it
+							WriteInfluxdb(args.filename, args.items, false)
+						}
 					}
 				}
 			} else if task.method == IO_TASK_M_FETCH {
